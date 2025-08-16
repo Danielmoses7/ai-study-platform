@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Buddy Pro - CS Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    /* Global Styles */
+    :root {
+        --primary-dark: #141E30;
+        --secondary-dark: #243B55;
+        --accent-purple: #6a11cb;
+        --accent-blue: #2575fc;
+        --text-color: #ffffff;
+        --bg-glass: rgba(255, 255, 255, 0.08);
+        --bg-glass-light: rgba(255, 255, 255, 0.15);
+        --border-color: rgba(255, 255, 255, 0.15);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, var(--primary-dark), var(--secondary-dark));
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: var(--text-color);
+        overflow: hidden;
+    }
+    .screen {
+        width: 100%;
+        max-width: 1100px;
+        height: 95vh;
+        max-height: 850px;
+        display: none;
+        flex-direction: column;
+        background: var(--bg-glass);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 50px rgba(0,0,0,0.4);
+        border: 1px solid var(--border-color);
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    .screen.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); }}
+
+    .screen-header { padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .screen-header h1 { font-size: 1.5rem; }
+    .screen-header .back-btn { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; transition: transform 0.2s ease; }
+    .screen-header .back-btn:hover { transform: scale(1.1); }
+
+    /* ---- Dashboard Screen ---- */
+    #dashboardScreen { padding: 2rem 3rem; }
+    .dashboard-header { margin-bottom: 2rem; }
+    .dashboard-header h1 { font-size: 2.5rem; background: linear-gradient(90deg, #8E2DE2, #4A00E0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .dashboard-header p { font-size: 1.1rem; opacity: 0.8; }
+    .dashboard-actions { display: flex; gap: 1rem; margin-bottom: 2rem; }
+    .action-btn { padding: 0.8rem 1.5rem; background: var(--bg-glass-light); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 10px; cursor: pointer; transition: all 0.2s ease; font-size: 0.95rem; }
+    .action-btn:hover { background: var(--accent-blue); border-color: var(--accent-blue); }
+
+    .courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; overflow-y: auto; max-height: calc(100% - 250px); padding: 0.5rem; }
+    .course-card { background: var(--bg-glass-light); padding: 1.5rem; border-radius: 15px; cursor: pointer; transition: all 0.3s ease; border: 1px solid transparent; }
+    .course-card:hover { transform: translateY(-5px); border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.2); }
+    .course-card h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .progress-bar { width: 100%; height: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; margin-bottom: 0.5rem; }
+    .progress-bar div { height: 100%; background: linear-gradient(90deg, var(--accent-purple), var(--accent-blue)); border-radius: 4px; }
+    .course-card span { font-size: 0.8rem; opacity: 0.7; }
+
+    /* ---- Study Session Screen ---- */
+    #studySessionScreen .screen-header { background: rgba(0,0,0,0.1); }
+    .study-session-body { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 280px; background: rgba(0,0,0,0.1); padding: 1.5rem; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 2rem; }
+    .sidebar-section h4 { margin-bottom: 1rem; opacity: 0.7; font-size: 0.9rem; text-transform: uppercase; }
+    .sidebar-btn { display: block; width: 100%; padding: 0.8rem 1rem; border: 1px solid rgba(255,255,255,0.2); background: var(--bg-glass-light); color: white; border-radius: 10px; text-align: left; font-size: 0.95rem; cursor: pointer; transition: background 0.2s ease; margin-bottom: 0.5rem; }
+    .sidebar-btn:hover { background: rgba(255,255,255,0.2); }
+    .sidebar-btn.active { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); border-color: transparent; font-weight: bold; }
+
+    /* ---- Chat Area ---- */
+    .chat-container { flex: 1; display: flex; flex-direction: column; }
+    .chat-messages { flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; }
+    .message { display: flex; align-items: flex-start; gap: 10px; animation: fadeInMessage 0.4s ease forwards; max-width: 95%;}
+    .message.user { justify-content: flex-end; align-self: flex-end; }
+    .message.ai { justify-content: flex-start; align-self: flex-start; }
+    @keyframes fadeInMessage { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); }}
+    .avatar { width: 40px; height: 40px; border-radius: 50%; background-size: cover; flex-shrink: 0; }
+    .user .avatar { background-image: url('https://i.ibb.co/bz6k6vG/user.png'); }
+    .ai .avatar { background-image: url('https://i.ibb.co/ZVh01dm/robot.png'); }
+    .bubble { padding: 1rem 1.2rem; border-radius: 20px; max-width: 100%; line-height: 1.5; font-size: 0.95rem;}
+    .user .bubble { background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: white; border-bottom-right-radius: 5px; }
+    .ai .bubble { background: var(--bg-glass-light); color: white; border-bottom-left-radius: 5px; }
+    .chat-input { display: flex; gap: 0.5rem; padding: 1rem; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border-color); }
+    .chat-input textarea { flex: 1; padding: 0.8rem 1rem; border: none; border-radius: 25px; background: var(--bg-glass-light); color: white; resize: none; font-size: 1rem; outline: none; }
+    .send-btn { width: 50px; height: 50px; border: none; border-radius: 50%; background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: white; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s ease; }
+    .send-btn:hover { transform: scale(1.1); }
+    
+    /* Quiz Styles */
+    .quiz-options { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .quiz-option-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 0.8rem; border-radius: 8px; cursor: pointer; text-align: left; color: white; }
+    .quiz-option-btn:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+    .quiz-option-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+    .quiz-option-btn.correct { background: #28a745; border-color: #28a745; }
+    .quiz-option-btn.incorrect { background: #dc3545; border-color: #dc3545; }
+    
+    /* Summarizer Screen */
+    #summarizeScreen { padding: 2rem 3rem; gap: 1.5rem; }
+    #summarizeInput { width: 100%; flex-grow: 1; background: var(--bg-glass-light); border: 1px solid var(--border-color); border-radius: 15px; padding: 1rem; color: var(--text-color); font-size: 1rem; resize: none; }
+    #summarizeOutput { width: 100%; flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 15px; padding: 1rem; color: var(--text-color); font-size: 1rem; overflow-y: auto; }
+    .summarizer-container { display: flex; gap: 1.5rem; flex: 1; min-height: 0; }
+
+</style>
+</head>
+<body>
+
+<div id="dashboardScreen" class="screen active">
+    <div class="dashboard-header">
+        <h1 id="welcomeMessage">Study Buddy</h1>
+        <p>Your personal AI learning assistant. Choose a subject to begin.</p>
+    </div>
+    <div class="dashboard-actions">
+        <button class="action-btn" onclick="showSummarizeScreen()">📄 Summarize Text</button>
+        <button class="action-btn" onclick="resetAllData()">🗑️ Reset All Progress</button>
+    </div>
+    <h2>My Courses</h2>
+    <div id="coursesGrid" class="courses-grid"></div>
+</div>
+
+<div id="studySessionScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showDashboard()">←</button>
+        <h1 id="sessionTitle">Studying...</h1>
+    </div>
+    <div class="study-session-body">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h4>Study Mode</h4>
+                <button class="sidebar-btn active" id="qaModeBtn" onclick="setStudyMode('qa')">🗣️ Q & A</button>
+                <button class="sidebar-btn" id="quizModeBtn" onclick="setStudyMode('quiz')">📝 Quiz Me</button>
+            </div>
+            <div class="sidebar-section">
+                <h4>Context</h4>
+                <button class="sidebar-btn">📄 Upload PDF</button>
+                <button class="sidebar-btn">🔗 Add URL</button>
+            </div>
+        </div>
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages"></div>
+            <form class="chat-input" onsubmit="handleUserInput(event)">
+                <textarea id="messageInput" rows="1" placeholder="Ask a question..."></textarea>
+                <button type="submit" class="send-btn">➤</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="summarizeScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showDashboard()">←</button>
+        <h1>Text Summarizer</h1>
+    </div>
+    <div class="summarizer-container">
+        <textarea id="summarizeInput" placeholder="Paste your text here to summarize..."></textarea>
+        <div id="summarizeOutput" placeholder="Summary will appear here..."></div>
+    </div>
+    <button class="action-btn" onclick="handleSummarize()" style="align-self: center; margin-top: 1rem;">Summarize Now</button>
+</div>
+
+
+<script>
+    // --- IMPORTANT: REPLACE WITH YOUR API KEY ---
+    const apiKey = "AIzaSyDmwbmBGZ_K_zUhuxg_AZYJ1c6FVTerZM8";
+
+    // --- State and Data ---
+    let appState = {};
+    let isWaiting = false;
+    let currentStudyMode = 'qa'; // 'qa' or 'quiz'
+
+    const defaultState = {
+        userName: "Student",
+        courses: [
+            { id: 1, name: "Networking", icon: "🌐", progress: 0, chatHistory: [] },
+            { id: 2, name: "Operating Systems", icon: "💻", progress: 0, chatHistory: [] },
+            { id: 3, name: "DBMS", icon: "🗃️", progress: 0, chatHistory: [] },
+            { id: 4, name: "System Design", icon: "🏗️", progress: 0, chatHistory: [] },
+            { id: 5, name: "DSA", icon: "📈", progress: 0, chatHistory: [] },
+            { id: 6, name: "Compiler Design", icon: "⚙️", progress: 0, chatHistory: [] }
+        ],
+        currentCourseId: null
+    };
+
+    // --- DOM Elements ---
+    const dashboardScreen = document.getElementById('dashboardScreen');
+    const studySessionScreen = document.getElementById('studySessionScreen');
+    const summarizeScreen = document.getElementById('summarizeScreen');
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const coursesGrid = document.getElementById('coursesGrid');
+    const sessionTitle = document.getElementById('sessionTitle');
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+
+    // --- LOCAL STORAGE ---
+    function saveState() {
+        localStorage.setItem('studyBuddyState', JSON.stringify(appState));
+    }
+
+    function loadState() {
+        const savedState = localStorage.getItem('studyBuddyState');
+        if (savedState) {
+            appState = JSON.parse(savedState);
+        } else {
+            appState = JSON.parse(JSON.stringify(defaultState)); // Deep copy
+        }
+    }
+
+    function resetAllData() {
+        if (confirm("Are you sure you want to reset all your progress and chat history? This cannot be undone.")) {
+            localStorage.removeItem('studyBuddyState');
+            loadState();
+            renderDashboard();
+        }
+    }
+
+    // --- Screen Navigation ---
+    function showScreen(screenElement) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        screenElement.classList.add('active');
+    }
+    const showDashboard = () => { appState.currentCourseId = null; saveState(); renderDashboard(); showScreen(dashboardScreen); };
+    
+    // THIS IS THE CORRECTED FUNCTION
+    function showSummarizeScreen() {
+        document.getElementById('summarizeInput').value = ''; // Clears the input box
+        document.getElementById('summarizeOutput').innerHTML = 'Summary will appear here...'; // Resets the output box
+        showScreen(summarizeScreen);
+    }
+
+    function showStudySession(courseId) {
+        appState.currentCourseId = courseId;
+        const course = appState.courses.find(c => c.id === courseId);
+        sessionTitle.textContent = `${course.icon} Studying: ${course.name}`;
+        renderChatHistory();
+        if (course.chatHistory.length === 0) {
+            const welcomeText = `Welcome to your ${course.name} session. Ask a question or start a quiz!`;
+            addMessage('ai', welcomeText);
+            course.chatHistory.push({ sender: 'ai', text: welcomeText });
+        }
+        saveState();
+        showScreen(studySessionScreen);
+    }
+    
+    // --- Rendering ---
+    function renderDashboard() {
+        welcomeMessage.textContent = `Welcome back, ${appState.userName}!`;
+        coursesGrid.innerHTML = '';
+        appState.courses.forEach(course => {
+            const card = document.createElement('div');
+            card.className = 'course-card';
+            card.innerHTML = `
+                <h3>${course.icon} ${course.name}</h3>
+                <div class="progress-bar"><div style="width: ${course.progress}%;"></div></div>
+                <span>${course.progress}% Mastery</span>
+            `;
+            card.onclick = () => showStudySession(course.id);
+            coursesGrid.appendChild(card);
+        });
+    }
+
+    function renderChatHistory() {
+        chatMessages.innerHTML = '';
+        const course = appState.courses.find(c => c.id === appState.currentCourseId);
+        if (course) {
+            course.chatHistory.forEach(msg => addMessage(msg.sender, msg.text, false)); // Don't re-save
+        }
+    }
+
+    // --- Study Mode Logic ---
+    function setStudyMode(mode) {
+        currentStudyMode = mode;
+        document.getElementById('qaModeBtn').classList.toggle('active', mode === 'qa');
+        document.getElementById('quizModeBtn').classList.toggle('active', mode === 'quiz');
+        messageInput.placeholder = mode === 'qa' ? "Ask a question..." : "Type 'start quiz' to get a question.";
+    }
+
+    // --- Main User Input Handler ---
+    function handleUserInput(e) {
+        e.preventDefault();
+        if (isWaiting) return;
+        
+        if (currentStudyMode === 'qa') {
+            const text = messageInput.value.trim();
+            if (text) {
+                addMessage('user', text);
+                getAIResponse(text);
+            }
+        } else if (currentStudyMode === 'quiz') {
+            generateQuiz();
+        }
+        messageInput.value = '';
+    }
+
+    // --- Chat & AI Functions ---
+    function addMessage(sender, text, shouldSave = true) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = text.replace(/\n/g, '<br>'); // Simple newline handling
+
+        if (sender === 'user') {
+            msgDiv.appendChild(bubble);
+            msgDiv.appendChild(avatar);
+        } else {
+            msgDiv.appendChild(avatar);
+            msgDiv.appendChild(bubble);
+        }
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        if (shouldSave && appState.currentCourseId) {
+            const course = appState.courses.find(c => c.id === appState.currentCourseId);
+            course.chatHistory.push({ sender, text });
+            saveState();
+        }
+        return msgDiv;
+    }
+
+    async function getAIResponse(prompt) {
+        const course = appState.courses.find(c => c.id === appState.currentCourseId);
+        if (!course) return;
+
+        isWaiting = true;
+        const thinkingMsg = addMessage('ai', 'Thinking...');
+        
+        const generationConfig = {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+        };
+
+        if (currentStudyMode === 'quiz') {
+            generationConfig.responseMimeType = "application/json";
+        }
+
+        const contextualPrompt = `In the context of studying ${course.name}, ${prompt}`;
+        const requestBody = {
+            contents: [{ parts: [{ text: contextualPrompt }] }],
+            generationConfig
+        };
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!res.ok) throw new Error(`API Error: ${res.status}`);
+            
+            const data = await res.json();
+            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get a response from the AI.";
+            
+            thinkingMsg.remove();
+            
+            if (currentStudyMode === 'quiz') {
+                displayQuiz(reply);
+            } else {
+                addMessage('ai', reply);
+            }
+
+        } catch (err) {
+            thinkingMsg.querySelector('.bubble').innerHTML = `Error: ${err.message}.<br><br>Please check your API key and network connection.`;
+        }
+        
+        isWaiting = false;
+        saveState();
+    }
+    
+    // --- QUIZ FUNCTIONALITY ---
+    function generateQuiz() {
+        const course = appState.courses.find(c => c.id === appState.currentCourseId);
+        addMessage('user', `Generate a quiz question for ${course.name}.`);
+        const quizPrompt = `Generate a single multiple-choice question about ${course.name}. The question should be challenging but fair. Return ONLY a valid JSON object with the keys: "question", "options" (an object with A,B,C,D keys), and "answer" (the key of the correct option, e.g., "C").`;
+        getAIResponse(quizPrompt);
+    }
+    
+    function displayQuiz(jsonString) {
+        try {
+            const data = JSON.parse(jsonString);
+            let quizHtml = `<strong>${data.question}</strong><div class="quiz-options" id="quiz-${Date.now()}">`;
+            for (const key in data.options) {
+                quizHtml += `<button class="quiz-option-btn" onclick="checkAnswer(this, '${key}', '${data.answer}')">${key}: ${data.options[key]}</button>`;
+            }
+            quizHtml += `</div>`;
+            addMessage('ai', quizHtml);
+        } catch (e) {
+            addMessage('ai', "Sorry, I couldn't create a quiz question properly. Please try again.");
+        }
+    }
+
+    function checkAnswer(btn, selected, correct) {
+        const optionsDiv = btn.parentElement;
+        Array.from(optionsDiv.children).forEach(b => {
+            b.disabled = true;
+            if (b.textContent.startsWith(correct)) {
+                b.classList.add('correct');
+            }
+        });
+
+        let feedbackText;
+        if (selected === correct) {
+            btn.classList.add('correct');
+            feedbackText = "Correct! Great job. Your mastery has increased.";
+            const course = appState.courses.find(c => c.id === appState.currentCourseId);
+            course.progress = Math.min(100, course.progress + 5);
+        } else {
+            btn.classList.add('incorrect');
+            feedbackText = `Not quite. The correct answer was ${correct}. Keep studying!`;
+        }
+        addMessage('ai', feedbackText);
+        saveState();
+        renderDashboard();
+    }
+
+    // --- SUMMARIZER FUNCTIONALITY ---
+    async function handleSummarize() {
+        const textToSummarize = document.getElementById('summarizeInput').value;
+        if (!textToSummarize.trim() || isWaiting) return;
+        
+        isWaiting = true;
+        const outputDiv = document.getElementById('summarizeOutput');
+        outputDiv.innerHTML = "Summarizing, please wait...";
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: "Summarize the following text in clear, concise points:\n\n" + textToSummarize }] }]
+                })
+            });
+            if (!res.ok) throw new Error(`API Error: ${res.status}`);
+            const data = await res.json();
+            const summary = data.candidates?.[0]?.content?.parts?.[0]?.text || "Could not generate summary.";
+            outputDiv.innerHTML = summary.replace(/\n/g, '<br>');
+        } catch (err) {
+            outputDiv.textContent = `Error: ${err.message}`;
+        }
+        isWaiting = false;
+    }
+
+
+    // --- Initial Setup ---
+    window.onload = () => {
+        loadState();
+        renderDashboard();
+        showDashboard();
+    };
+
+</script>
+</body>
+</html>
